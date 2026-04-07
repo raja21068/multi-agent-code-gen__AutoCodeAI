@@ -50,7 +50,7 @@ class PlannerAgent:
             f"Repo context:\n{repo_context}\n\n"
             "Produce the plan now."
         )
-        raw = await llm(prompt, system=self.SYSTEM)
+        raw = await llm(prompt, system=self.SYSTEM, agent="planner")
         try:
             return json.loads(raw)
         except Exception:
@@ -113,10 +113,11 @@ class CoderAgent:
             diff_text = await llm(
                 self._build_prompt(subtask, context_files, previous_results, memory, existing_code),
                 system=self.SYSTEM_DIFF,
+                agent="coder",
             )
             return self._apply_diff(existing_code, diff_text)
         prompt = self._build_prompt(subtask, context_files, previous_results, memory)
-        return await llm(prompt, system=self.SYSTEM_NEW)
+        return await llm(prompt, system=self.SYSTEM_NEW, agent="coder")
 
     async def stream_code(
         self,
@@ -130,7 +131,7 @@ class CoderAgent:
         prompt = self._build_prompt(
             subtask, context_files, previous_results, memory, existing_code
         )
-        async for token in llm_stream(prompt, system=system):
+        async for token in llm_stream(prompt, system=system, agent="coder"):
             yield token
 
     @staticmethod
@@ -180,7 +181,7 @@ class TesterAgent:
             f"Task description: {subtask}\n\n"
             "Write pytest test cases."
         )
-        return await llm(prompt, system=self.SYSTEM)
+        return await llm(prompt, system=self.SYSTEM, agent="tester")
 
 
 # ---------------------------------------------------------------------------
@@ -200,7 +201,7 @@ class DebuggerAgent:
             f"Error:\n{error}\n\n"
             "Fix the code."
         )
-        return await llm(prompt, system=self.SYSTEM)
+        return await llm(prompt, system=self.SYSTEM, agent="debugger")
 
 
 # ---------------------------------------------------------------------------
@@ -222,7 +223,7 @@ class CriticAgent:
             for r in results
         )
         prompt = f"Original task: {task}\n\nPipeline results:\n{summary}"
-        return await llm(prompt, system=self.SYSTEM)
+        return await llm(prompt, system=self.SYSTEM, agent="critic")
 
 
 # ---------------------------------------------------------------------------
